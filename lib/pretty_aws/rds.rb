@@ -1,4 +1,4 @@
-module Daws
+module PrettyAws
   
   class Rds
     

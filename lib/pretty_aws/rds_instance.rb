@@ -1,2 +1,4 @@
-class RdsInstance
+module PrettyAws
+  class RdsInstance
+  end
 end

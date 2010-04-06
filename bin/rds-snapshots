@@ -1,10 +1,10 @@
 #!/usr/bin/env ruby
 
-require File.dirname(__FILE__) + '/../lib/daws'
+require File.dirname(__FILE__) + '/../lib/pretty_aws'
 require 'thor'
 # require 'highline/import'
 
-module Daws
+module PrettyAws
   
   class RdsSnapshotsController < Thor
     
@@ -48,4 +48,4 @@ module Daws
   
 end
 
-Daws::RdsSnapshotsController.start
+PrettyAws::RdsSnapshotsController.start

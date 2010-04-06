@@ -1,4 +1,4 @@
-module Daws
+module PrettyAws
   module ExtendRds
     
     def restore_db_instance_to_point_in_time(source,target,opts={})
@@ -63,5 +63,5 @@ module Daws
 end
 
 Aws::Rds.class_eval do
-  include Daws::ExtendRds
+  include PrettyAws::ExtendRds
 end
