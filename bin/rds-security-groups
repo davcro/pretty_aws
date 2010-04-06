@@ -1,0 +1,117 @@
+#!/usr/bin/env ruby
+
+require File.dirname(__FILE__) + '/../lib/daws'
+require 'thor'
+# require 'highline/import'
+
+module Daws
+  
+  class RdsSecurityGroupsController < Thor
+    
+    default_task :list
+    
+    desc "create <name> --description", "create security group"
+    method_option :description, :type=>:string, :required=>true
+    def create(group_name)
+      Base.rds.create_db_security_group(group_name,options[:description])
+      puts "\n\n"
+      row group_name, 'created!'
+      puts "\n\n"
+    end
+    
+    desc "delete <name>", "delete security group"
+    def delete(group_name)
+      Base.rds.delete_db_security_group(group_name)
+      puts "\n\n"
+      row group_name, 'deleted!'
+      puts "\n\n"
+    end
+    
+    desc "revoke <group_name>", "revoke ingress for group"
+    method_options :ip => :string, :name => :string, :owner => :string
+    def revoke(group_name)
+      if ip_range=options[:ip]
+        Base.rds.revoke_db_security_group_ingress_overwrite(group_name,:cidrip=>ip_range)
+        puts "\n\n"
+        row group_name, 'revoke ip', ip_range
+        puts "\n\n"
+      end
+      if (name=options[:name]) and (owner=options[:owner])
+        Base.rds.revoke_db_security_group_ingress(group_name,:ec2_group_name=>name,:ec2_group_owner_id=>owner)
+        puts "\n\n"
+        row group_name, 'revoke ec2', name, owner
+        puts "\n\n"
+      end
+    end
+    
+    desc "authorize <group_name> [--ip=ip range] [--name=ec2 group name] [--owner=ec2 owner]", "authorize ingress for group"
+    method_options :ip => :string, :name => :string, :owner => :string
+    def authorize(group_name)
+      if ip_range=options[:ip]
+        Base.rds.authorize_db_security_group_ingress(group_name,:cidrip=>ip_range)
+        puts "\n\n"
+        row group_name, 'authorize ip', ip_range
+        puts "\n\n"
+      end
+      if (name=options[:name]) and (owner=options[:owner])
+        Base.rds.authorize_db_security_group_ingress(group_name,:ec2_group_name=>name,:ec2_group_owner_id=>owner)
+        puts "\n\n"
+        row group_name, 'authorize ec2', name, owner
+        puts "\n\n"
+      end
+    end
+    
+    desc "list [name]", 'show security groups'
+    method_options :verbose => :boolean
+    def list
+      
+      items = Base.rds.describe_db_security_groups
+      
+      if options[:verbose]
+        puts YAML.dump(items)
+      end
+      
+      puts "\n\n\n\n"
+      
+      items.each do |item|
+        row item[:db_security_group_name], :prepend => '~~~~~>'
+        row ""
+        row 'owner', item[:owner_id]
+        row 'description', item[:db_security_group_description]
+        row ''
+        row 'ec2 groups', 'Name', 'Owner', 'Status'
+        item[:ec2_security_groups].each do |group|
+          row '', group[:ec2_security_group_name], group[:ec2_security_group_owner_id], group[:status]
+        end
+        row ''
+        row 'ip ranges', 'Range', 'Status'
+        item[:ip_ranges].each do |ip_range|
+          row '', ip_range[:cidrip], ip_range[:status]
+        end
+        puts "\n\n"
+      end
+      
+    end
+    
+    no_tasks do
+      def row(*cols)
+        prepend = cols.find { |c| c.is_a?(Hash) and c.has_key?(:prepend) }
+        if prepend.nil?
+          prepend = ''
+        else
+          cols.delete(prepend)
+          prepend = prepend[:prepend]
+        end
+        output = [ sprintf("%-8s",prepend) ]
+        cols.each do |col|
+          output << sprintf("%-20s", col)
+        end
+        output = output.join(" ") + "\n"
+        $stdout.print(output)
+      end
+    end
+  end
+  
+end
+
+Daws::RdsSecurityGroupsController.start
