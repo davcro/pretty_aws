@@ -1,0 +1,22 @@
+=== Pretty AWS
+
+A pretty version of aws command line tools
+
+=== INSTALL
+
+- install dependencies:
+	sudo gem install thor
+	sudo gem install aws
+
+- build and install the gem
+- create the pretty_aws root directory ~/.pretty_aws
+  the pretty_aws root directory will store aws config vars
+- update the pretty_aws sample config file pretty_aws.sample.yml 
+and copy it to: ~/.pretty_aws/pretty_aws.yml
+
+=== USAGE
+
+comes with two executables for managing rds
+
+1.  rds-instances
+2.  rds-security-groups

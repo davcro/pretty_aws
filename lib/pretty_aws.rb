@@ -4,8 +4,9 @@ require 'aws'
 require 'yaml'
 require 'pp'
 require 'pathname'
+require 'fileutils'
 
-require File.dirname(__FILE__) + '/pretty_aws/rds'
+require File.dirname(__FILE__) + '/pretty_aws/rds_instance'
 require File.dirname(__FILE__) + '/pretty_aws/ext'
 
 module PrettyAws

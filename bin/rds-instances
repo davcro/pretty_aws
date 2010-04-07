@@ -10,7 +10,17 @@ module PrettyAws
     
     default_task :show
     
-    desc "update <name>", "update instace"
+    desc 'accounts', 'show accounts'
+    def accounts
+      puts Base.find_active_acount
+    end
+    
+    desc "classes", "show available instance class sizes"
+    def classes
+      puts RdsInstance::INSTANCE_CLASSES.join(', ')
+    end
+    
+    desc "update <name>", "update instance"
     method_options :groups => :string, :storage => :string, :class => :string, :delayed => false
     def update(name)
       params = {}
@@ -43,7 +53,7 @@ module PrettyAws
       name = ask("What is the database named? (a-z only) ")
       instance_class = choose do |menu|
         menu.prompt = "Select a DB Size:"
-        Rds::INSTANCE_CLASSES.each do |class_name|
+        RdsInstance::INSTANCE_CLASSES.each do |class_name|
           menu.choice(class_name)
         end
       end
@@ -58,8 +68,15 @@ module PrettyAws
       p '', 'username', username
       p '', 'password', password
       
-      Base.rds.create_db_instance(name, instance_class, storage, username, password, :availability_zone => 'us-east-1a')
-      Rds.wait_until(name, 'available')
+      RdsInstance.create(
+        :name => name, 
+        :instance_class => instance_class,
+        :storage => storage,
+        :username => username,
+        :password => password
+      )
+      
+
     end
     
     desc "delete <name>", "delete named db"
@@ -67,7 +84,7 @@ module PrettyAws
       say("You are about to delete the database: #{name}")
       yes = ask("Are you sure? (yes) ")
       if yes=='yes'
-        Base.rds.delete_db_instance(name)
+        RdsInstance.delete(name)
         puts "delete!"
       else
         puts "abort"
@@ -76,55 +93,37 @@ module PrettyAws
     
     desc "console [name]", 'log into mysql console'
     def console(name)
-      item = Rds.find(name)
-      exec "mysql -u #{item[:master_username]} -h #{item[:endpoint][:address]} -p"
+      item = RdsInstance.find(name)
+      exec "mysql -u #{item.username} -h #{item.address} -p"
     end
     
     desc "show [name]", 'show instances'
     method_options :verbose => false
     def show(name=nil)
       if name.nil?
-        items = Rds.all
+        items = RdsInstance.all
       else
-        items = [Rds.find(name)]
+        items = [RdsInstance.find(name)]
       end
       if options[:verbose]
         puts YAML.dump(items.map(&:params))
       end
       puts "\n\n"
       items.each do |item|
-        p('----->', item[:db_instance_identifier])
+        p('----->', item.name)
         puts ""
-        p('', 'status', item[:db_instance_status])
-
-        if item.has_key?(:endpoint) and item[:endpoint].is_a?(Hash) and item[:endpoint].has_key?(:address)
-          address = item[:endpoint][:address]
-        else
-          address = 'nil'
-        end
-        p('', 'address', address)
-
-        p('', 'size', item[:db_instance_class])
-
-        p('', 'storage', "#{item[:allocated_storage]}G")
-
-        p('', 'zone', item[:availability_zone])
-
-        p('', 'username', item[:master_username])
-
-        p '', 'engine', item[:engine]
-
-        p('', 'security groups', 'name', 'status')
-        item[:db_security_groups].each do |group|
-          p('', '', group[:db_security_group_name], group[:status])
-        end
-
-
-        p '', 'created at', item[:instance_create_time]  
-        p '', 'restorable at', item[:latest_restorable_time]
-        p '', 'backup period', item[:backup_retention_period]
-        p '', 'backup window', item[:preferred_backup_window]
-        p '', 'mod window', item[:preferred_maintenance_window]
+        p('', 'status', item.status)
+        p('', 'address', item.address)
+        p('', 'cpu size', item.cpu_size)
+        p('', 'storage', "#{item.storage}G")
+        p('', 'zone', item.zone)
+        p('', 'username', item.username)
+        p '', 'engine', item.engine
+        p '', 'created at', item.created_at  
+        p '', 'restorable at', item.restorable_at
+        p '', 'backup period', item.backup_period
+        p '', 'backup window', item.backup_window
+        p '', 'mod window', item.mod_window
 
         puts "\n\n"
       end
@@ -133,6 +132,12 @@ module PrettyAws
     end
     
     no_tasks do
+      
+      def print_header
+        # show the account
+        
+      end
+      
       def p(gutter,col1='',col2='',col3='')
         $stdout.printf("%-8s %-20s %-20s %-20s\n",gutter,col1,col2,col3)
       end
