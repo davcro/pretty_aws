@@ -13,8 +13,37 @@ module PrettyAws
       on_exception
     end
     
+    def restore_db_instance_from_db_snapshot(snapshot_id, db_id, instance_class)
+      params={}
+      params['DBSnapshotIdentifier']=snapshot_id
+      params['DBInstanceIdentifier']=db_id
+      params['DBInstanceClass']=instance_class
+      params['AvailabilityZone']='us-east-1a'
+      link = do_request("RestoreDBInstanceFromDBSnapshot", params)
+    rescue Exception
+      on_exception
+    end
+    
     def describe_db_snapshots
-      link = do_request('DescribeDBSnapshots',{})
+      link = do_request('DescribeDBSnapshots',{},:pull_out_array=>[:describe_db_snapshots_result, :db_snapshots, :db_snapshot])
+    rescue Exception
+      on_exception
+    end
+    
+    def create_db_snapshot( db_id, snapshot_id )
+
+      params = {}
+      params['DBSnapshotIdentifier'] = snapshot_id
+      params['DBInstanceIdentifier'] = db_id
+      link = do_request("CreateDBSnapshot", params)
+    rescue Exception
+      on_exception
+    end
+    
+    def delete_db_snapshot(id)
+      params = {}
+      params['DBSnapshotIdentifier'] = id
+      link=do_request('DeleteDBSnapshot',params)
     rescue Exception
       on_exception
     end

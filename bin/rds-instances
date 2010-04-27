@@ -10,11 +10,6 @@ module PrettyAws
     
     default_task :show
     
-    desc 'accounts', 'show accounts'
-    def accounts
-      puts Base.find_active_acount
-    end
-    
     desc "classes", "show available instance class sizes"
     def classes
       puts RdsInstance::INSTANCE_CLASSES.join(', ')

@@ -1,0 +1,89 @@
+#!/usr/bin/env ruby
+
+require File.dirname(__FILE__) + '/../lib/pretty_aws'
+require 'thor'
+require 'highline/import'
+
+module PrettyAws
+  
+  class RdsSnapshotsController < Thor
+    
+    default_task :list
+    
+    desc "list", 'list all snapshots'
+    def list
+      groups = RdsSnapshot.find_all_and_group
+      
+      puts "\n\n"
+      groups.each do |name, items|
+        row(name, :prepend => '~~~~>')
+        puts ''
+        row('name', 'status','size','created_at')
+        items.each do |item|
+          row(item.id, item.status, item.storage+"G", item.created_at)
+        end
+        puts "\n\n"
+      end
+    end
+    
+    desc "restore <snapshot id> <new db id>", "create new database from snapshot"
+    method_option :class, :type => :string, :required => true
+    def restore(id, db_id)
+      puts "\n\n"
+      puts "Restoring #{id} as #{db_id} with class #{options[:class]}"
+      puts "\n\n"
+      Base.rds.restore_db_instance_from_db_snapshot(id,db_id,options[:class])
+    end
+    
+    desc "create <db id> <snapshot id>", 'take snapshot of db'
+    def create(db_id, id)
+      puts "\n\n"
+      puts "Taking snapshot of #{db_id} as #{id}"
+      puts "\n\n"
+      Base.rds.create_db_snapshot(db_id,id)
+    end
+    
+    desc "delete <snapshot id>", 'delete snapshot'
+    def delete(id)
+      puts "\n\n"
+      say("You are about to delete the snapshot: #{id}")
+      yes = ask("Are you sure? (yes) ")
+      if yes=='yes'
+        Base.rds.delete_db_snapshot(id)
+        puts "delete!"
+      else
+        puts "abort"
+      end
+    end
+    
+    no_tasks do
+      
+      def print_header
+        # show the account
+        
+      end
+      
+      def p(gutter,col1='',col2='',col3='')
+        $stdout.printf("%-8s %-20s %-20s %-20s\n",gutter,col1,col2,col3)
+      end
+      def row(*cols)
+        prepend = cols.find { |c| c.is_a?(Hash) and c.has_key?(:prepend) }
+        if prepend.nil?
+          prepend = ''
+        else
+          cols.delete(prepend)
+          prepend = prepend[:prepend]
+        end
+        output = [ sprintf("%-8s",prepend) ]
+        cols.each do |col|
+          output << sprintf("%-20s", col)
+        end
+        output = output.join(" ") + "\n"
+        $stdout.print(output)
+      end
+    end
+  end
+  
+end
+
+PrettyAws::RdsSnapshotsController.start
