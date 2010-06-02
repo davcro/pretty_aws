@@ -1,5 +1,7 @@
 
 require 'rubygems'
+gem 'activesupport', '=2.3.5'
+require 'active_support'
 require 'aws'
 require 'yaml'
 require 'pp'

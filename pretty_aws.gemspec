@@ -13,4 +13,5 @@ Gem::Specification.new do |s|
   
   s.add_dependency 'aws', '2.2.6'
   s.add_dependency 'thor', '0.13.4'
+  s.add_dependency 'activesupport', '2.3.5'
 end
