@@ -12,6 +12,9 @@ module PrettyAws
     end
     
     def self.group_by_db(items)
+      if items.nil?
+        return {}
+      end
       grouped = { }
       items.each do |item|
         grouped[item.db_id] ||= [ ]

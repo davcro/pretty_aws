@@ -22,7 +22,10 @@ and copy it to: ~/.pretty_aws/pretty_aws.yml
 
 === USAGE
 
-comes with two executables for managing rds
+comes with three executables for managing rds
 
 1.  rds-instances
 2.  rds-security-groups
+3.  rds-snapshots
+
+execute rds-instances -h for more info

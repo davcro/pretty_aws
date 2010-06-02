@@ -1,13 +1,10 @@
-require 'lib/pretty_aws'
+task :publish do
+  version = File.read('VERSION')
+  puts "publishing gem pretty_aws #{version}"
+  exec "gem build pretty_aws.gemspec ; gem push pretty_aws-#{version}.gem"
+end
 
-require 'pp'
-
-desc 'test the gem'
-task :test do
-  # pp PrettyAws::Base.rds.create_db_snapshot('fidup', 'fidupsnapshot')
-  PrettyAws::RdsSnapshot.all.each do |s|
-    pp s.params
-    puts "----"
-  end
-  # pp rds.describe_db_snapshots
+task :install do
+  version = File.read('VERSION')
+  exec "gem build pretty_aws.gemspec ; gem install pretty_aws-#{version}.gem --no-ri --no-rdoc"
 end
